@@ -1,0 +1,25 @@
+﻿@using ASPPatterns.Chap4.ActiveRecord.Model
+@model ASPPatterns.Chap4.ActiveRecord.Model.Post
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_BlogMaster.cshtml";
+}
+
+@section MainContent
+{
+    @using (Html.BeginForm())
+    {
+        <p>
+            Subject<br />
+            @Html.TextBox("Subject")
+        </p>
+        <p>
+            Content<br />
+            @Html.TextArea("Content")
+        </p>
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    }
+}
