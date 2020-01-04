@@ -11,7 +11,7 @@
     <div id="content">
         <h2>@Html.Encode(((Post)ViewData["LatestPost"]).Subject)</h2>
 
-        @{ ((Post)ViewData["LatestPost"]).Text.Replace("\n", "<br />"); }
+        @Html.Encode(((Post)ViewData["LatestPost"]).Text.Replace("\n", "<br />"));
         <br /><i>
             posted on
             @Html.Encode(((Post)ViewData["LatestPost"]).DateAdded.ToLongDateString())
