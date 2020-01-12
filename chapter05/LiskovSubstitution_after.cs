@@ -1,11 +1,10 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
+namespace ASPPatterns.Chap5.LiscovSubstitue.Model
 {
 
     enum PaymentType
@@ -35,7 +34,7 @@ namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
         }
         public string MakeRefund(decimal amount, string transactionId, string token)
         {
-            return "this is the paypal refund";
+            return "your paypal refund is successful";
         }
     }
 
@@ -43,24 +42,30 @@ namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
     {
         public string MakeRefund(decimal amount, string transactionId, string username, string password, string productId)
         {
-            return "this is the world pay refund";
+            return "your worldpay refund is successful";
         }
     }
 
     abstract class PaymentServiceBase
     {
-        public abstract string Refund(decimal amount, string transactionId);
+        public abstract RefundResponse Refund(decimal amount, string transactionId);
     }
 
     class PaypalPayment : PaymentServiceBase
     {
         public string Username { get; set; }
         public string Password { get; set; }
-        public override string Refund(decimal amount, string transactionId)
+        public PaypalPayment(string name, string pass)
+        {
+            Username = name;
+            Password = pass;
+        }
+        public override RefundResponse Refund(decimal amount, string transactionId)
         {
             MockPaypalWebService paypal = new MockPaypalWebService();
             var token = paypal.ObtainToken(Username, Password);
-            return paypal.MakeRefund(amount, transactionId, token);
+            var message =  paypal.MakeRefund(amount, transactionId, token);
+            return new RefundResponse() { Message = message, Success = message.Contains("successful") ? true : false };
         }
     }
 
@@ -69,10 +74,17 @@ namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
         public string Username { get; set; }
         public string Password { get; set; }
         public string ProductId { get; set; }
-        public override string Refund(decimal amount, string transactionId)
+        public WorldPayPayment(string name, string pass, string id)
+        {
+            Username = name;
+            Password = pass;
+            ProductId = id;
+        }
+        public override RefundResponse Refund(decimal amount, string transactionId)
         {
             MockWorldPayWebService worldPay = new MockWorldPayWebService();
-            return worldPay.MakeRefund(amount, transactionId, Username, Password, ProductId);
+            var message =  worldPay.MakeRefund(amount, transactionId, Username, Password, ProductId);
+            return new RefundResponse() { Message = message, Success = message.Contains("successful")?true:false };
         }
     }
 
@@ -83,9 +95,9 @@ namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
             switch (type)
             {
                 case PaymentType.Paypal:
-                    return new PaypalPayment();
+                    return new PaypalPayment("testname", "test pass");
                 case PaymentType.WorldPay:
-                    return new WorldPayPayment();
+                    return new WorldPayPayment("testname", "test pass", "test id");
                 default:
                     throw new ApplicationException("no such payment type");
             }
@@ -98,27 +110,19 @@ namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
         {
             RefundResponse response = new RefundResponse();
             PaymentServiceBase service = PaymentServiceFactory.GetPaymentServiceFrom(request.Payment);
-            if (service is PaypalPayment)
-            {
-                ((PaypalPayment)service).Username = "testuser";
-                ((PaypalPayment)service).Password = "test password";
-            }
-            else if (service is WorldPayPayment)
-            {
-                ((WorldPayPayment)service).Username = "testuser";
-                ((WorldPayPayment)service).Password = "test password";
-                ((WorldPayPayment)service).ProductId = "test product id";
-            }
+            //if (service is PaypalPayment)
+            //{
+            //    ((PaypalPayment)service).Username = "testuser";
+            //    ((PaypalPayment)service).Password = "test password";
+            //}
+            //else if (service is WorldPayPayment)
+            //{
+            //    ((WorldPayPayment)service).Username = "testuser";
+            //    ((WorldPayPayment)service).Password = "test password";
+            //    ((WorldPayPayment)service).ProductId = "test product id";
+            //}
 
-            response.Message = service.Refund(request.RefundAmount, request.PaymentTransactionId);
-            if (response.Message.Contains("refund"))
-            {
-                response.Success = true;
-            }
-            else
-            {
-                response.Success = false;
-            }
+            response = service.Refund(request.RefundAmount, request.PaymentTransactionId); 
             return response;
         }
     }
@@ -133,9 +137,8 @@ namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
             request.RefundAmount = 0.5m;
             var response = new ReturnService().Refund(request);
             Console.WriteLine(response.Message);
-
+            Console.WriteLine("is successful:"+response.Success);
             Console.ReadLine();
         }
     }
 }
-
