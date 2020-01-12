@@ -1,94 +1,64 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ASPPatterns.Chap5.LayerSupertypePattern.Model
+namespace ASPPatterns.Chap5.DependencyInversion.Model
 {
-    abstract class EntityBase<T>
+    interface IProductDiscountStrategy
     {
-        private T _id;
-        private bool _idHasBeenSet = false;
-        private IList<string> _brokenRules = new List<String>();
-        public void Add(string rule)
+    }
+    class ChristmasProductDiscount:IProductDiscountStrategy
+    {
+    }
+    interface IProductRepository
+    {
+        IEnumerable<Product> FindAll();
+    }
+    class LinqProductRepository : IProductDiscountStrategy
+    {
+        public IEnumerable<Product> FindAll()
         {
-            this._brokenRules.Add(rule);
-        }
-        protected abstract void CheckForBrokenRules();
-        private void ClearCollectionOfBrokenRules()
-        {
-            this._brokenRules.Clear();
-        }
-        public EntityBase()
-        { }
-        public EntityBase(T id)
-        {
-            this.Id = id;
-            this._idHasBeenSet = true;
-        }
-        public T Id
-        {
-            get
-            {
-                return _id;
-            }
-            set
-            {
-                if (this._idHasBeenSet)
-                    ThrowExceptionIfValueIsNull();
-                _id = value;
-            }
-        }
-
-        public IList<String> GetBrokenRules()
-        {
-            return this._brokenRules;
-        }
-        public bool IsValid()
-        {
-            this.ClearCollectionOfBrokenRules();
-            this.CheckForBrokenRules();
-            return this._brokenRules.Count() == 0;
-        }
-        private void ThrowExceptionIfValueIsNull()
-        {
-            throw new ApplicationException("You cannot override an ID");
+            return new List<Product>();
         }
     }
 
-    class Customer : EntityBase<Customer>
+    class Product
     {
-        private string _firstname;
-        private string _secondname;
-        public Customer(string firstname, string secondname)
+        public void AdjustPriceWith(IProductDiscountStrategy strategy)
         {
-            this._firstname = firstname;
-            this._secondname = secondname;
-        }
-        protected override void CheckForBrokenRules()
-        {
-            if (_firstname.Length < 3)
-                this.Add("first name is too short");
-            if (_secondname.Length < 3)
-                this.Add("second name is too short");
+
         }
     }
+
+    class ProductService
+    {
+        private IProductRepository _repository;
+        public ProductService(IProductRepository repository)
+        {
+            this._repository = repository;
+        }
+        public IEnumerable<Product> GetProductsAndApplyDiscount(IProductDiscountStrategy strategy)
+        {
+            IEnumerable<Product> products = this._repository.FindAll();
+            foreach (var p in products)
+            {
+                p.AdjustPriceWith(strategy);
+            }
+            return products;
+        }
+    }
+
 
     class Program
     {
         static void Main(string[] args)
         {
-            Customer c = new Customer("te", "stname");
-            Console.WriteLine(c.IsValid());
-
-            Customer c1 = new Customer("te1", "stname");
-            Console.WriteLine(c1.IsValid());
+            
 
 
             Console.ReadLine();
         }
     }
 }
-
