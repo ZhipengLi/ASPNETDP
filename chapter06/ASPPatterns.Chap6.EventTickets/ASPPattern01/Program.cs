@@ -376,6 +376,10 @@ namespace ASPPatterns.Chap6.EventTickets.Service
                         response.Message = "can no longer purchase with this reservation";
                     }
                 }
+                else
+                {
+                    response = _purchaseHistory.RetrievePreviousResponseFor(request.CorrelationId);
+                }
             }
             catch (Exception ex)
             {
